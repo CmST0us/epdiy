@@ -79,13 +79,16 @@ EpdFontProperties epd_font_properties_default() {
 
 const EpdGlyph* epd_get_glyph(const EpdFont* font, uint32_t code_point) {
     const EpdUnicodeInterval* intervals = font->intervals;
-    for (int i = 0; i < font->interval_count; i++) {
-        const EpdUnicodeInterval* interval = &intervals[i];
-        if (code_point >= interval->first && code_point <= interval->last) {
-            return &font->glyph[interval->offset + (code_point - interval->first)];
-        }
+    int lo = 0, hi = font->interval_count - 1;
+    while (lo <= hi) {
+        int mid = lo + (hi - lo) / 2;
+        const EpdUnicodeInterval* interval = &intervals[mid];
         if (code_point < interval->first) {
-            return NULL;
+            hi = mid - 1;
+        } else if (code_point > interval->last) {
+            lo = mid + 1;
+        } else {
+            return &font->glyph[interval->offset + (code_point - interval->first)];
         }
     }
     return NULL;
